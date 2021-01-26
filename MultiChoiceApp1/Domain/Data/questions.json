@@ -1,0 +1,16 @@
+
+[
+    {
+  "question": {
+    "id" : 1,
+     "name" : "question1"
+  },
+  "answers": [
+     {
+       "id" : 1,
+       "name" : "answer1"
+     }
+  ],
+  "trueAnswerId": 1
+    }
+]
