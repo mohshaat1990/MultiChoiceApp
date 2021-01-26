@@ -61,6 +61,7 @@ extension QuestionCollectionViewCell: UITableViewDataSource, UITableViewDelegate
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let answer = question?.answers?[indexPath.row]
         guard question?.trueAnswer == nil else {
+            
             return
         }
         question?.userAnswerId = answer?.id

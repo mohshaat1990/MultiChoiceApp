@@ -70,6 +70,7 @@ class MultiChoiceContainerViewController: UIViewController {
     
     @IBAction func prevAction(_ sender: Any) {
         currentPage = currentPage - 1
+        enableButton(enable: true)
         if currentPage >   0 {
             multiChoicesCollectionView.setContentOffset(CGPoint(x:  (currentPage - 1) * Int(view.frame.width), y: 0), animated: true)
             setCurrentPage(currentPage)
