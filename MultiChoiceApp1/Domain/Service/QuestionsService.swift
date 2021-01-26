@@ -7,3 +7,18 @@
 //
 
 import Foundation
+
+class QuestionsService {
+    
+    class func getQuestions(completion: @escaping ([Question], Error?) -> Void) {
+        let questionsData = FileHelper.getData(name: "questions") as Data
+        let decoder = JSONDecoder()
+        do {
+            let questions = try decoder.decode(QuestionsResponse.self, from: questionsData)
+            completion(questions.questions ?? [], nil)
+        } catch let error {
+            completion([], error)
+        }
+    }
+    
+}

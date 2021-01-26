@@ -8,14 +8,17 @@
 import Foundation
 
 
-public struct QuestionsResponse: Codable {
+ struct QuestionsResponse: Codable {
 
   // MARK: Declaration for string constants to be used to decode and also serialize.
-  private struct SerializationKeys {
-    static let answers = "answers"
-    static let trueAnswerId = "trueAnswerId"
-    static let question = "question"
+ enum CodingKeys: String, CodingKey {
+    case questions = "data"
   }
-    public var question: [Question]?
+    public var questions: [Question]?
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        questions = try container.decodeIfPresent([Question].self, forKey: .questions)
+    }
 
 }

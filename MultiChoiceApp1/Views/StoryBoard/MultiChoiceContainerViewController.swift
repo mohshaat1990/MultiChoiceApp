@@ -7,17 +7,38 @@
 //
 
 import UIKit
+import RxSwift
 
 class MultiChoiceContainerViewController: UIViewController {
 
+    @IBOutlet weak var scoreLabel: UILabel!
     @IBOutlet weak var pageLabel: UILabel!
     @IBOutlet weak var multiChoicesCollectionView: UICollectionView!
+    @IBOutlet weak var nextButton: UIButton!
+    @IBOutlet weak var prevButton: UIButton!
+    
+    private var multiChoiceContinerViewModel: MultiChoiceContinerViewModelDelegate =  MultiChoiceContinerViewModel()
+     let disposeBag = DisposeBag()
     var currentPage = 1
-    var numberOfPages = 20
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         registerCollectionViewCell()
-        setCurrentPage(1)
+        setupData()
+        multiChoiceContinerViewModel.getQuestions()
+        setCurrentPage(currentPage)
+        enableButton(enable: false)
+    }
+    
+    func setupData() {
+        multiChoiceContinerViewModel.score.bind(to: scoreLabel.rx.text)
+        multiChoiceContinerViewModel.questionsArr.bind(to: multiChoicesCollectionView.rx.items(cellIdentifier: QuestionCollectionViewCell.getCellIdentifier(),
+                                                                                                   cellType: QuestionCollectionViewCell.self))
+                  { [weak self] row, questionData, cell in
+                    cell.questionCollectionViewCellDelegate = self
+                   cell.configure(data: questionData)
+                   
+                  }.disposed(by: disposeBag)
     }
     
     func registerCollectionViewCell() {
@@ -26,14 +47,20 @@ class MultiChoiceContainerViewController: UIViewController {
                                         forCellWithReuseIdentifier: QuestionCollectionViewCell.getCellIdentifier())
     }
     
+    func enableButton(enable: Bool) {
+        nextButton.isUserInteractionEnabled = enable
+         nextButton.alpha  = enable  ? 1.0 : 0.5
+    }
+    
     func setCurrentPage(_ page: Int) {
-        pageLabel.text = "\(page)/\(numberOfPages)"
+        pageLabel.text = "\(page)/\(multiChoiceContinerViewModel.questionsArr.value.count)"
     }
     
     @IBAction func nextAction(_ sender: Any) {
         currentPage = currentPage + 1
-        if currentPage <= numberOfPages {
-        multiChoicesCollectionView.setContentOffset(CGPoint(x:  currentPage * Int(view.frame.width), y: 0), animated: true)
+        enableButton(enable: false)
+        if currentPage <= multiChoiceContinerViewModel.questionsArr.value.count {
+          multiChoicesCollectionView.setContentOffset(CGPoint(x:  (currentPage - 1) * Int(view.frame.width), y: 0), animated: true)
             setCurrentPage(currentPage)
         } else {
             currentPage -= 1
@@ -44,7 +71,7 @@ class MultiChoiceContainerViewController: UIViewController {
     @IBAction func prevAction(_ sender: Any) {
         currentPage = currentPage - 1
         if currentPage >   0 {
-            multiChoicesCollectionView.setContentOffset(CGPoint(x:  currentPage * Int(view.frame.width), y: 0), animated: true)
+            multiChoicesCollectionView.setContentOffset(CGPoint(x:  (currentPage - 1) * Int(view.frame.width), y: 0), animated: true)
             setCurrentPage(currentPage)
             
         } else {
@@ -56,35 +83,13 @@ class MultiChoiceContainerViewController: UIViewController {
 }
 
 
-extension MultiChoiceContainerViewController: UICollectionViewDelegate, UICollectionViewDataSource,UICollectionViewDelegateFlowLayout{
-    
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return numberOfPages
-    }
+extension MultiChoiceContainerViewController: UICollectionViewDelegate,UICollectionViewDelegateFlowLayout{
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         for cell in multiChoicesCollectionView.visibleCells {
             let indexPath = multiChoicesCollectionView.indexPath(for: cell)
             setCurrentPage(indexPath?.row ?? 0)
         }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: QuestionCollectionViewCell.getCellIdentifier(), for: indexPath) as? QuestionCollectionViewCell{
-        
-            cell.questionLabel.text = "fdzf"
-            return cell
-        }
-        return UICollectionViewCell()
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-
-        return 0
     }
 
         func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -93,4 +98,13 @@ extension MultiChoiceContainerViewController: UICollectionViewDelegate, UICollec
             return CGSize(width: view.frame.width, height: frameSize.height)
         }
 
+}
+
+extension MultiChoiceContainerViewController: QuestionCollectionViewCellDelegate {
+    func didSelectAnswerFor(question: Question?) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            self?.enableButton(enable: true)
+            self?.multiChoiceContinerViewModel.didSelectAnswerFor(question: question)
+       }
+    }
 }
